@@ -1,0 +1,20 @@
+version: '3.7'
+
+services:
+  ubuntu-victim:
+    build: .
+    hostname: ubuntu-victim
+    container_name: wazuh-ubuntu-victim
+    restart: unless-stopped
+    networks:
+      - wazuh-net
+    cap_add:
+      - SYS_PTRACE
+      - NET_ADMIN
+    ports:
+      - "2222:22"
+
+networks:
+  wazuh-net:
+    external: true
+    name: wazuh-server_default
