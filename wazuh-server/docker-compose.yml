@@ -1,9 +1,7 @@
 # Wazuh App Copyright (C) 2017, Wazuh Inc. (License GPLv2)
-# Modified for Apple Silicon (M1/M2) compatibility:
-#   - wazuh-cert-init: ARM64 native alpine copies certs into a Docker volume
-#     before the x86_64 indexer starts, avoiding VirtioFS+Rosetta2 EDEADLK errors.
-#   - Indexer opensearch.yml and internal_users.yml are written via entrypoint
-#     heredoc for the same reason.
+# Apple Silicon (M1/M2) compatible: ALL config files and certs are loaded
+# into named Docker volumes via prepare-certs.sh (uses docker cp, not VirtioFS).
+# Run ./prepare-certs.sh once before docker compose up.
 version: '3.7'
 
 services:
@@ -46,11 +44,9 @@ services:
       - wazuh_wodles:/var/ossec/wodles
       - filebeat_etc:/etc/filebeat
       - filebeat_var:/var/lib/filebeat
-      - ./config/wazuh_indexer_ssl_certs/root-ca-manager.pem:/etc/ssl/root-ca.pem
-      - ./config/wazuh_indexer_ssl_certs/wazuh.manager.pem:/etc/ssl/filebeat.pem
-      - ./config/wazuh_indexer_ssl_certs/wazuh.manager-key.pem:/etc/ssl/filebeat.key
-      - ./config/wazuh_cluster/wazuh_manager.conf:/wazuh-config-mount/etc/ossec.conf
-      - ../rules/local_rules.xml:/var/ossec/etc/rules/local_rules.xml
+      - wazuh-manager-ssl-vol:/etc/ssl
+      - wazuh-manager-conf-vol:/wazuh-config-mount/etc
+      - wazuh-manager-rules-vol:/wazuh-manager-rules
 
   wazuh.indexer:
     image: wazuh/wazuh-indexer:4.7.5
@@ -164,11 +160,8 @@ services:
       - API_USERNAME=wazuh-wui
       - API_PASSWORD=MyS3cr37P450r.*-
     volumes:
-      - ./config/wazuh_indexer_ssl_certs/wazuh.dashboard.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard.pem
-      - ./config/wazuh_indexer_ssl_certs/wazuh.dashboard-key.pem:/usr/share/wazuh-dashboard/certs/wazuh-dashboard-key.pem
-      - ./config/wazuh_indexer_ssl_certs/root-ca.pem:/usr/share/wazuh-dashboard/certs/root-ca.pem
-      - ./config/wazuh_dashboard/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml
-      - ./config/wazuh_dashboard/wazuh.yml:/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml
+      - wazuh-dashboard-certs-vol:/usr/share/wazuh-dashboard/certs
+      - wazuh-dashboard-osd-config-vol:/usr/share/wazuh-dashboard/config
       - wazuh-dashboard-config:/usr/share/wazuh-dashboard/data/wazuh/config
       - wazuh-dashboard-custom:/usr/share/wazuh-dashboard/plugins/wazuh/public/assets/custom
     depends_on:
@@ -191,5 +184,10 @@ volumes:
   filebeat_var:
   wazuh-indexer-data:
   wazuh-indexer-certs-vol:
+  wazuh-dashboard-certs-vol:
+  wazuh-dashboard-osd-config-vol:
   wazuh-dashboard-config:
   wazuh-dashboard-custom:
+  wazuh-manager-ssl-vol:
+  wazuh-manager-conf-vol:
+  wazuh-manager-rules-vol:
