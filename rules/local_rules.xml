@@ -1,0 +1,56 @@
+<group name="local,soc-lab">
+
+  <!-- Detect multiple failed SSH login attempts (brute force) -->
+  <rule id="100001" level="10" frequency="5" timeframe="60">
+    <if_matched_sid>5716</if_matched_sid>
+    <description>SOC Lab: SSH brute force attempt detected</description>
+    <group>authentication_failures,brute_force</group>
+  </rule>
+
+  <!-- Detect successful login after multiple failures (possible compromise) -->
+  <rule id="100002" level="14">
+    <if_matched_sid>100001</if_matched_sid>
+    <if_sid>5715</if_sid>
+    <description>SOC Lab: Possible SSH brute force success</description>
+    <group>authentication_success,brute_force</group>
+  </rule>
+
+  <!-- Detect new user creation -->
+  <rule id="100003" level="8">
+    <if_sid>5901</if_sid>
+    <description>SOC Lab: New user account created</description>
+    <group>account_changes</group>
+  </rule>
+
+  <!-- Detect sudo privilege escalation -->
+  <rule id="100004" level="9">
+    <if_sid>5402</if_sid>
+    <description>SOC Lab: Privilege escalation via sudo detected</description>
+    <group>privilege_escalation</group>
+  </rule>
+
+  <!-- Detect changes to /etc/passwd or /etc/shadow (FIM) -->
+  <rule id="100005" level="12">
+    <if_sid>550</if_sid>
+    <match>/etc/passwd|/etc/shadow</match>
+    <description>SOC Lab: Critical file modified - possible credential tampering</description>
+    <group>file_integrity,credential_access</group>
+  </rule>
+
+  <!-- Detect netcat usage (common attack tool) -->
+  <rule id="100006" level="11">
+    <if_sid>5710</if_sid>
+    <match>nc |ncat |netcat</match>
+    <description>SOC Lab: Netcat usage detected - possible reverse shell</description>
+    <group>attack_tools</group>
+  </rule>
+
+  <!-- Detect nmap scan from logs -->
+  <rule id="100007" level="8">
+    <decoded_as>syslog</decoded_as>
+    <match>nmap</match>
+    <description>SOC Lab: Nmap scan detected in logs</description>
+    <group>reconnaissance</group>
+  </rule>
+
+</group>
