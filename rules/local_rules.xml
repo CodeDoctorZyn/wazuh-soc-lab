@@ -54,3 +54,105 @@
   </rule>
 
 </group>
+
+<!-- ═══════════════════════════════════════════════════
+     ACTIVE DIRECTORY ATTACK DETECTION RULES
+     MITRE ATT&CK mapped — Windows Event Log / Sysmon
+     ═══════════════════════════════════════════════════ -->
+
+<group name="local,soc-lab,active-directory">
+
+  <!-- T1110 - AD Brute Force: 4 or more failed logons in 60s -->
+  <rule id="100010" level="10" frequency="4" timeframe="60">
+    <if_matched_sid>60122</if_matched_sid>
+    <description>SOC Lab [T1110]: Active Directory brute force - multiple failed logons</description>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+    <group>authentication_failures,brute_force,active_directory</group>
+  </rule>
+
+  <!-- T1558.003 - Kerberoasting: EventID 4769 with RC4 encryption (etype 0x17) -->
+  <rule id="100011" level="12">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">4769</field>
+    <field name="win.eventdata.ticketEncryptionType">0x17</field>
+    <description>SOC Lab [T1558.003]: Kerberoasting detected - RC4 TGS ticket requested (weak encryption)</description>
+    <mitre>
+      <id>T1558.003</id>
+    </mitre>
+    <group>credential_access,kerberoasting,active_directory</group>
+  </rule>
+
+  <!-- T1003.006 - DCSync: EventID 4662 for Directory Replication rights -->
+  <rule id="100012" level="15">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">4662</field>
+    <field name="win.eventdata.properties" type="pcre2">1131f6a[ae]|9923a32a|1131f6ad</field>
+    <description>SOC Lab [T1003.006]: DCSync attack detected - directory replication rights accessed</description>
+    <mitre>
+      <id>T1003.006</id>
+    </mitre>
+    <group>credential_access,dcsync,active_directory</group>
+  </rule>
+
+  <!-- T1069/T1087 - BloodHound AD Enumeration: LDAP queries EventID 1644 -->
+  <rule id="100013" level="9">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">1644</field>
+    <description>SOC Lab [T1069/T1087]: Active Directory LDAP enumeration detected (BloodHound-like activity)</description>
+    <mitre>
+      <id>T1069</id>
+      <id>T1087</id>
+    </mitre>
+    <group>discovery,enumeration,active_directory</group>
+  </rule>
+
+  <!-- T1550.002 - Pass-the-Hash: NTLM logon with no password (LogonType 3, NTLM) -->
+  <rule id="100014" level="13">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">4624</field>
+    <field name="win.eventdata.logonType">3</field>
+    <field name="win.eventdata.authenticationPackageName">NTLM</field>
+    <field name="win.eventdata.logonProcessName">NtLmSsp</field>
+    <description>SOC Lab [T1550.002]: Possible Pass-the-Hash attack - NTLM lateral movement detected</description>
+    <mitre>
+      <id>T1550.002</id>
+    </mitre>
+    <group>lateral_movement,pass_the_hash,active_directory</group>
+  </rule>
+
+  <!-- T1078 - New admin account or privilege escalation -->
+  <rule id="100015" level="12">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">4728</field>
+    <description>SOC Lab [T1078]: User added to privileged AD group (Domain/Enterprise Admins)</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+    <group>privilege_escalation,account_changes,active_directory</group>
+  </rule>
+
+  <!-- T1136.002 - New domain account created -->
+  <rule id="100016" level="8">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">4720</field>
+    <description>SOC Lab [T1136.002]: New domain account created</description>
+    <mitre>
+      <id>T1136.002</id>
+    </mitre>
+    <group>account_changes,active_directory</group>
+  </rule>
+
+  <!-- Sysmon EventID 1 - Suspicious process (LSASS dump attempt) -->
+  <rule id="100017" level="14">
+    <if_sid>61612</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)mimikatz|procdump|meterpreter|cobalt</field>
+    <description>SOC Lab [T1003]: Known credential dumping tool executed on domain controller</description>
+    <mitre>
+      <id>T1003</id>
+    </mitre>
+    <group>credential_access,active_directory</group>
+  </rule>
+
+</group>
