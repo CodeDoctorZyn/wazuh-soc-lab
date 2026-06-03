@@ -69,6 +69,12 @@ echo "[*] Loading manager ossec.conf..."
 copy_into_volume wazuh-server_wazuh-manager-conf-vol /ossec-conf \
   "$MGR_CFG/wazuh_manager.conf:ossec.conf"
 
+echo "[*] Loading agent.conf (Windows group config)..."
+# Create a temporary volume loader for the shared group dir
+docker volume create wazuh-server_wazuh-manager-agentconf-vol > /dev/null
+copy_into_volume wazuh-server_wazuh-manager-agentconf-vol /agent-conf \
+  "$MGR_CFG/agent.conf:agent.conf"
+
 echo "[*] Loading custom rules..."
 copy_into_volume wazuh-server_wazuh-manager-rules-vol /rules \
   "$RULES/local_rules.xml:local_rules.xml"
